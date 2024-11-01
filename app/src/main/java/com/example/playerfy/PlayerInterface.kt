@@ -2,6 +2,7 @@ package com.example.playerfy
 
 import android.annotation.SuppressLint
 import androidx.compose.animation.animateContentSize
+import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.Image
@@ -14,6 +15,7 @@ import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.pager.HorizontalPager
@@ -31,19 +33,34 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.painter.Painter
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.zIndex
 
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
-fun PlayerInterface(songs: List<Song>, expanded: Boolean, setExpanded: () -> Unit) {
+fun ExpandedPlayerInterface(songs: List<Song>, expanded: Boolean, collapse: () -> Unit) {
     val state = rememberPagerState(pageCount = { songs.size })
 
     // Remember the current song name based on the current page index
     val currentSongIndex = state.currentPage
     val currentSongName = songs[currentSongIndex].name
 
-    if (expanded) {
+    val screenHeight = LocalConfiguration.current.screenHeightDp.dp
+
+    val offset by animateDpAsState(
+        targetValue = if (expanded) 0.dp else screenHeight + 100.dp,
+        animationSpec = tween(durationMillis = 300)
+    )
+
+    Box (
+        modifier = Modifier
+            .offset(y = offset)
+            .fillMaxSize()
+            .background(Color(0xFF2ecc71))
+            .zIndex(1f)
+    ) {
         Column(
             modifier = Modifier.fillMaxSize()
         ) {
@@ -60,7 +77,7 @@ fun PlayerInterface(songs: List<Song>, expanded: Boolean, setExpanded: () -> Uni
                     contentDescription = null,
                     modifier = Modifier
                         .align(Alignment.Start)
-                        .clickable { setExpanded() }
+                        .clickable { collapse() }
                 )
             }
             HorizontalPager(state = state) { index ->
@@ -79,7 +96,7 @@ fun PlayerInterface(songs: List<Song>, expanded: Boolean, setExpanded: () -> Uni
                         contentDescription = null,
                         modifier = Modifier
                             .clip(RoundedCornerShape(16.dp))
-                            .clickable { setExpanded() }
+                            .clickable { collapse() }
                     )
                 }
             }
@@ -87,6 +104,10 @@ fun PlayerInterface(songs: List<Song>, expanded: Boolean, setExpanded: () -> Uni
             PlayerActions(currentSongName)
         }
     }
+}
+
+fun CollapsedPlayerInterface(songs: List<Song>, expand: () -> Unit) {
+
 }
 
 @Composable

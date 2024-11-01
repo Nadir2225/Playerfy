@@ -31,7 +31,7 @@ import androidx.compose.ui.unit.dp
 
 @Composable
 fun App() {
-    var expanded by remember { mutableStateOf(false) }
+    var expanded by remember { mutableStateOf(true) }
     val items = listOf(
         Song(name = "song 1", color = Color(0xFF2ecc71)),
         Song(name = "song 2", color = Color(0xFFe74c3c)),
@@ -39,15 +39,11 @@ fun App() {
         Song(name = "song 4", color = Color(0xFFe67e22))
     )
     Box(modifier = Modifier.fillMaxSize()) {
-        Box (
-            modifier = if (expanded) {
-                Modifier
-                    .fillMaxSize()
-                    .background(Color(0xFF2ecc71))
-                    .animateContentSize(tween(300)) // Animate size changes
-                    .background(Color(0xFF2ecc71), shape = RoundedCornerShape(16.dp))
-            } else {
-                Modifier
+        Text(text = "hii")
+        ExpandedPlayerInterface(items, expanded, collapse = { expanded = false })
+        if (!expanded) {
+            Box(
+                modifier = Modifier
                     .fillMaxWidth(0.95F)
                     .padding(0.dp)
                     .padding(bottom = 60.dp)
@@ -56,11 +52,11 @@ fun App() {
                     .animateContentSize(tween(300)) // Animate size changes
                     .height(60.dp)
                     .clickable {
-                        expanded = !expanded
+                        expanded = true
                     }
+            ) {
+                CollapsedPlayerInterface(items, expand = { expanded = true })
             }
-        ) {
-            PlayerInterface(items, expanded, setExpanded = { expanded = !expanded })
         }
     }
 }

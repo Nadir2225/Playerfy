@@ -26,28 +26,26 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 
 @Composable
 fun App() {
-    var expanded by remember { mutableStateOf(false) }
+    var expanded by remember { mutableStateOf(true) }
     val items = listOf(
-        Song(name = "song 1", color = Color(0xFF2ecc71)),
-        Song(name = "song 2", color = Color(0xFFe74c3c)),
-        Song(name = "song 3", color = Color(0xFF2980b9)),
-        Song(name = "song 4", color = Color(0xFFe67e22))
+//        Song(name = "song 1"),
+        Song(name = "song 2", img = R.drawable.hmhas),
+//        Song(name = "song 3"),
+//        Song(name = "song 4")
     )
     Box(modifier = Modifier.fillMaxSize()) {
-        Box (
-            modifier = if (expanded) {
-                Modifier
-                    .fillMaxSize()
-                    .background(Color(0xFF2ecc71))
-                    .animateContentSize(tween(300)) // Animate size changes
-                    .background(Color(0xFF2ecc71), shape = RoundedCornerShape(16.dp))
-            } else {
-                Modifier
+        Text(text = "hii")
+        ExpandedPlayerInterface(items, expanded, collapse = { expanded = false })
+        if (!expanded) {
+            Box(
+                modifier = Modifier
                     .fillMaxWidth(0.95F)
                     .padding(0.dp)
                     .padding(bottom = 60.dp)
@@ -56,11 +54,11 @@ fun App() {
                     .animateContentSize(tween(300)) // Animate size changes
                     .height(60.dp)
                     .clickable {
-                        expanded = !expanded
+                        expanded = true
                     }
+            ) {
+                CollapsedPlayerInterface(items, expand = { expanded = true })
             }
-        ) {
-            PlayerInterface(items, expanded, setExpanded = { expanded = !expanded })
         }
     }
 }

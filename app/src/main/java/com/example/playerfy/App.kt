@@ -13,6 +13,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -23,18 +24,22 @@ import androidx.compose.ui.unit.dp
 import com.example.playerfy.data.model.Song
 import com.example.playerfy.ui.screens.CollapsedPlayerInterface
 import com.example.playerfy.ui.screens.ExpandedPlayerInterface
+import com.example.playerfy.ui.viewmodel.SongsViewModel
 
 @Composable
-fun App() {
+fun App(songsViewModel: SongsViewModel) {
+    val currentSong by songsViewModel.currentSong.observeAsState()
+    val songsList by songsViewModel.songsList.observeAsState()
+
     var expanded by remember { mutableStateOf(true) }
     val items = listOf(
 //        Song(name = "song 1"),
-        Song(name = "song 2", img = R.drawable.hmhas),
+        Song(name = "Happier Than ever", artist = "Billie eillish", img = R.drawable.hmhas),
 //        Song(name = "song 3"),
 //        Song(name = "song 4")
     )
     Box(modifier = Modifier.fillMaxSize()) {
-        Text(text = "hii")
+        Text(text = "hii", modifier = Modifier.padding(top = 80.dp))
         ExpandedPlayerInterface(items, expanded, collapse = { expanded = false })
         if (!expanded) {
             Box(

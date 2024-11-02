@@ -9,10 +9,13 @@ import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -28,8 +31,10 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import com.example.playerfy.data.model.Song
+import com.example.playerfy.ui.components.SongsList
 import com.example.playerfy.ui.screens.CollapsedPlayerInterface
 import com.example.playerfy.ui.screens.ExpandedPlayerInterface
+import com.example.playerfy.ui.theme.Black
 import com.example.playerfy.ui.viewmodel.SongsViewModel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -40,11 +45,24 @@ fun App(songsViewModel: SongsViewModel) {
     val songsList by songsViewModel.songsList.observeAsState()
 
     var expanded by remember { mutableStateOf(true) }
+    var context = LocalContext.current
 
-    Box(modifier = Modifier.fillMaxSize()) {
-        Text(text = "hii", modifier = Modifier.padding(top = 80.dp))
-        Text(text = songsList.toString(), modifier = Modifier.padding(top = 100.dp))
+    Box(modifier = Modifier
+        .fillMaxSize()
+        .background(Black)) {
         if (!songsList.isNullOrEmpty()) {
+            SongsList(
+                cont = context.contentResolver,
+                songs = songsList!!,
+                songsViewModel = songsViewModel,
+                onSongClick = { song ->
+                    expanded = true
+                    songsViewModel.updateCurrentSong(song)
+            })
+        } else {
+            Text(text = "no files are found", modifier = Modifier.align(Alignment.Center))
+        }
+        if (currentSong?.song != null) {
             ExpandedPlayerInterface(
                 songs = songsList!!,
                 expanded = expanded,
@@ -58,15 +76,12 @@ fun App(songsViewModel: SongsViewModel) {
                         .fillMaxWidth(0.95F)
                         .padding(0.dp)
                         .padding(bottom = 60.dp)
-                        .background(Color(0xFF2ecc71), shape = RoundedCornerShape(16.dp))
+                        .background(Color.Transparent, shape = RoundedCornerShape(14.dp))
                         .align(Alignment.BottomCenter)
                         .animateContentSize(tween(300)) // Animate size changes
                         .height(60.dp)
-                        .clickable {
-                            expanded = true
-                        }
                 ) {
-                    CollapsedPlayerInterface(songsList!!, expand = { expanded = true })
+                    CollapsedPlayerInterface(songsViewModel = songsViewModel, cont = context.contentResolver, expand = { expanded = true })
                 }
         }
         }

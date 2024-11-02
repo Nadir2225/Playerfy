@@ -37,6 +37,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -73,6 +74,11 @@ import kotlin.math.min
 @Composable
 fun ExpandedPlayerInterface(songs: MutableList<Song>, expanded: Boolean, songsViewModel: SongsViewModel, cont: ContentResolver, collapse: () -> Unit) {
     val state = rememberPagerState(pageCount = { songs.size })
+    val currentSong by songsViewModel.currentSong.observeAsState()
+
+    LaunchedEffect(currentSong) {
+        state.scrollToPage(songs.indexOf(currentSong?.song))
+    }
 
     var isQueueShown by remember { mutableStateOf(false) }
 
@@ -137,7 +143,7 @@ fun ExpandedPlayerInterface(songs: MutableList<Song>, expanded: Boolean, songsVi
                 .clip(RoundedCornerShape(topStart = 20.dp, topEnd = 20.dp))
                 .fillMaxSize()
                 .background(Color.White)
-    //            .background(Color(0xFF2ecc71))
+                //            .background(Color(0xFF2ecc71))
                 .zIndex(1f)
         ) {
             Column(
@@ -163,7 +169,7 @@ fun ExpandedPlayerInterface(songs: MutableList<Song>, expanded: Boolean, songsVi
                         )
                     }
             ) {
-                PlayerHeader("current", collapse)
+                PlayerHeader(song.filePath.substringAfterLast("/"), collapse)
                 HorizontalPager(state = state) {
                     // Directly display the song name based on the current index
                     Column(
@@ -180,7 +186,6 @@ fun ExpandedPlayerInterface(songs: MutableList<Song>, expanded: Boolean, songsVi
                                 .fillMaxWidth(0.87f) // 60% of screen width
                                 .aspectRatio(1f)
                                 .clip(RoundedCornerShape(8.dp))
-                                .clickable { collapse() }
                         )
                     }
                 }
@@ -192,8 +197,108 @@ fun ExpandedPlayerInterface(songs: MutableList<Song>, expanded: Boolean, songsVi
     }
 }
 
-fun CollapsedPlayerInterface(songs: List<Song>, expand: () -> Unit) {
+@Composable
+fun CollapsedPlayerInterface(songsViewModel: SongsViewModel, cont: ContentResolver, expand: () -> Unit) {
+    val currentSong by songsViewModel.currentSong.observeAsState()
+    val songsList by songsViewModel.songsList.observeAsState()
 
+    val bitmap: Bitmap = if (currentSong?.song?.albumArtUri != null) {
+        currentSong!!.song?.albumArtUri?.let { songsViewModel.getBitmapFromUri(cont, it) } ?:
+        BitmapFactory.decodeResource(LocalContext.current.resources, R.drawable.song_img)
+    } else {
+        BitmapFactory.decodeResource(LocalContext.current.resources, R.drawable.song_img)
+    }
+
+    var songColor = Color.Gray
+
+    LaunchedEffect(currentSong?.song?.albumArtUri) {
+        // Load the bitmap and generate the color palette
+        withContext(Dispatchers.Default) {
+//            val bitmap = BitmapFactory.decodeResource(context.resources, song.img)
+
+            Palette.from(bitmap).generate { palette ->
+                palette?.dominantSwatch?.let { swatch ->
+                    songColor = Color(swatch.rgb) // Update the dominant color
+                }
+            }
+        }
+    }
+
+    val animatedColor by animateColorAsState(
+        targetValue = songColor,
+        animationSpec = tween(durationMillis = 500, easing = LinearEasing)
+    )
+
+    Row(
+        modifier = Modifier
+            .fillMaxSize()
+            .clip(RoundedCornerShape(14.dp))
+            .background(animatedColor)
+            .padding(start = 10.dp, end = 10.dp)
+            .clickable { },
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.SpaceBetween
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxHeight()
+                .fillMaxWidth(.5f)
+                .clickable { expand() },
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Image(
+                painter = BitmapPainter(bitmap.asImageBitmap()),
+                contentDescription = null,
+                modifier = Modifier
+                    .fillMaxHeight(.95f)
+                    .width(60.dp)
+                    .clip(RoundedCornerShape(10.dp))
+                    .padding(end = 10.dp)
+            )
+            Column(
+                modifier = Modifier.fillMaxSize(),
+                verticalArrangement = Arrangement.Center
+            ) {
+                (if (currentSong?.song?.title?.length!! >= 23) "${currentSong?.song?.title!!.slice(0..22)}..." else currentSong!!.song?.title)?.let { Text(text = it, color = Color.White, fontSize = 12.sp, fontWeight = FontWeight.Bold) }
+                currentSong?.song?.let { Text(text = it.artist, color = Color( 211, 211, 211, 179), fontSize = 10.sp,) }
+            }
+        }
+        Row (
+            modifier = Modifier.fillMaxWidth(.8f),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.SpaceBetween
+        ) {
+            Image(
+                modifier = Modifier.size(30.dp)
+                    .clickable {
+                        if (songsList!!.indexOf(currentSong?.song) != 0 ) {
+                            songsViewModel.updateCurrentSong(songsList?.get(songsList!!.indexOf(currentSong?.song) - 1)!!)
+                        }
+                    }
+                ,
+                painter = painterResource(R.drawable.previous),
+                contentDescription = null
+            )
+            Box(modifier = Modifier.size(30.dp).background(Color.White, shape = CircleShape)) {
+                Image(
+                    modifier = Modifier.size(15.dp).align(Alignment.Center),
+                    painter = painterResource(R.drawable.play),
+                    contentDescription = null
+                )
+            }
+            Image(
+                modifier = Modifier.size(30.dp)
+                    .clickable {
+                        if (songsList!!.indexOf(currentSong?.song) != songsList!!.size - 1 ) {
+                            songsViewModel.updateCurrentSong(songsList?.get(songsList!!.indexOf(currentSong?.song) + 1)!!)
+                        }
+                    }
+                ,
+                painter = painterResource(R.drawable.next),
+                contentDescription = null,
+            )
+        }
+    }
 }
 
 @Composable
@@ -337,9 +442,11 @@ fun PlayerActions(name: String, artist: String, openQueue: () -> Unit) {
             Image(
                 painter = painterResource(R.drawable.menu96),
                 contentDescription = null,
-                modifier = Modifier.size(30.dp).clickable {
-                    openQueue()
-                }
+                modifier = Modifier
+                    .size(30.dp)
+                    .clickable {
+                        openQueue()
+                    }
             )
         }
     }

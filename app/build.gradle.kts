@@ -70,4 +70,5 @@ dependencies {
 
     implementation(libs.androidx.palette)
     implementation(libs.easypermissions)
+    implementation(libs.androidx.media3.exoplayer)
 }

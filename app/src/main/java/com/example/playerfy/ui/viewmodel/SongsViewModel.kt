@@ -4,22 +4,25 @@ import android.app.Application
 import android.content.ContentResolver
 import android.content.ContentUris
 import android.content.Context
+import android.content.Intent
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.net.Uri
 import android.provider.MediaStore
+import android.util.Log
 import androidx.compose.ui.platform.LocalContext
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
+import com.example.playerfy.data.model.CurrentSong
 import com.example.playerfy.data.model.Song
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
 class SongsViewModel(application: Application) : AndroidViewModel(application) {
-    private var _currentSong: MutableLiveData<MutableMap<String, Any>> = MutableLiveData(mutableMapOf())
-    val currentSong: LiveData<MutableMap<String, Any>> = _currentSong
+    private var _currentSong: MutableLiveData<CurrentSong> = MutableLiveData(CurrentSong(null))
+    val currentSong: LiveData<CurrentSong> = _currentSong
 
     private var _songsList: MutableLiveData<MutableList<Song>> = MutableLiveData(mutableListOf())
     val songsList: LiveData<MutableList<Song>> = _songsList
@@ -28,11 +31,8 @@ class SongsViewModel(application: Application) : AndroidViewModel(application) {
     val songsQueue: LiveData<MutableList<Song>> = _songsQueue
 
     // Function to update the currently selected song
-    fun updateCurrentSong(newSong: Song, index: Int) {
-        _currentSong.value = mutableMapOf(
-            "index" to index,
-            "song" to newSong
-        )
+    fun updateCurrentSong(newSong: Song) {
+        _currentSong.value = CurrentSong(newSong)
     }
 
     fun updateSongsList(l: MutableList<Song>) {

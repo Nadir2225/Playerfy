@@ -9,11 +9,13 @@ espressoCore = "3.6.1"
 lifecycleRuntimeKtx = "2.8.4"
 activityCompose = "1.9.3"
 composeBom = "2024.04.01"
+media3Exoplayer = "1.4.1"
 palette = "1.0.0"
 runtimeLivedata = "1.7.5"
 
 [libraries]
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
+androidx-media3-exoplayer = { module = "androidx.media3:media3-exoplayer", version.ref = "media3Exoplayer" }
 androidx-palette = { module = "androidx.palette:palette", version.ref = "palette" }
 easypermissions = { module = "pub.devrel:easypermissions", version.ref = "easypermissions" }
 junit = { group = "junit", name = "junit", version.ref = "junit" }

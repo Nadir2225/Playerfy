@@ -1,5 +1,7 @@
 package com.example.playerfy.ui.screens
 
+import android.content.ContentResolver
+import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.util.Log
 import androidx.compose.animation.animateColorAsState
@@ -43,6 +45,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.asImageBitmap
+import androidx.compose.ui.graphics.painter.BitmapPainter
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.LayoutCoordinates
 import androidx.compose.ui.layout.onGloballyPositioned
@@ -57,6 +61,7 @@ import androidx.palette.graphics.Palette
 import com.example.playerfy.R
 import com.example.playerfy.data.model.Song
 import com.example.playerfy.ui.components.SongProgressBar
+import com.example.playerfy.ui.viewmodel.SongsViewModel
 import com.jetpack.marqueetext.MarqueeText
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -66,7 +71,7 @@ import kotlin.math.min
 
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
-fun ExpandedPlayerInterface(songs: List<Song>, expanded: Boolean, collapse: () -> Unit) {
+fun ExpandedPlayerInterface(songs: MutableList<Song>, expanded: Boolean, songsViewModel: SongsViewModel, cont: ContentResolver, collapse: () -> Unit) {
     val state = rememberPagerState(pageCount = { songs.size })
 
     var isQueueShown by remember { mutableStateOf(false) }
@@ -76,14 +81,23 @@ fun ExpandedPlayerInterface(songs: List<Song>, expanded: Boolean, collapse: () -
     var isDragging by remember { mutableStateOf(false) }
     val context = LocalContext.current
 
-    // Remember the current song name based on the current page index
     val currentSongIndex = state.currentPage
     val song = songs[currentSongIndex]
 
-    LaunchedEffect(song.img) {
+    val bitmap: Bitmap = if (song.albumArtUri != null) {
+        songsViewModel.getBitmapFromUri(cont, song.albumArtUri)?:
+        BitmapFactory.decodeResource(context.resources, R.drawable.song_img)
+    } else {
+        BitmapFactory.decodeResource(context.resources, R.drawable.song_img)
+    }
+
+    // Remember the current song name based on the current page index
+
+    LaunchedEffect(song.albumArtUri) {
         // Load the bitmap and generate the color palette
         withContext(Dispatchers.Default) {
-            val bitmap = BitmapFactory.decodeResource(context.resources, song.img)
+//            val bitmap = BitmapFactory.decodeResource(context.resources, song.img)
+
             Palette.from(bitmap).generate { palette ->
                 palette?.dominantSwatch?.let { swatch ->
                     songColor = Color(swatch.rgb) // Update the dominant color
@@ -120,7 +134,7 @@ fun ExpandedPlayerInterface(songs: List<Song>, expanded: Boolean, collapse: () -
         Box (
             modifier = Modifier
                 .offset(y = offset + offsetY.dp)
-                .clip(RoundedCornerShape(20.dp))
+                .clip(RoundedCornerShape(topStart = 20.dp, topEnd = 20.dp))
                 .fillMaxSize()
                 .background(Color.White)
     //            .background(Color(0xFF2ecc71))
@@ -160,7 +174,7 @@ fun ExpandedPlayerInterface(songs: List<Song>, expanded: Boolean, collapse: () -
                         horizontalAlignment = Alignment.CenterHorizontally
                     ) {
                         Image(
-                            painter = painterResource(song.img),
+                            painter = BitmapPainter(bitmap.asImageBitmap()),
                             contentDescription = null,
                             modifier = Modifier
                                 .fillMaxWidth(0.87f) // 60% of screen width
@@ -171,7 +185,7 @@ fun ExpandedPlayerInterface(songs: List<Song>, expanded: Boolean, collapse: () -
                     }
                 }
                 // Display the current song name
-                PlayerActions(song.name, song.artist, openQueue = { isQueueShown = true })
+                PlayerActions(song.title, song.artist, openQueue = { isQueueShown = true })
             }
         }
         Queue(show = isQueueShown, close = { isQueueShown = false })

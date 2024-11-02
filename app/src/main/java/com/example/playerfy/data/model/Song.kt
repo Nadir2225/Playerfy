@@ -1,15 +1,14 @@
 package com.example.playerfy.data.model
 
+import android.net.Uri
 import com.example.playerfy.R
 
-data class Song (
-    var img: Int = R.drawable.song_img,
-    var name: String,
-    var artist: String,
-    var folder: String = "",
-    var path: String = "",
-    var uri: String = "",
-    var id: Long = 0,
-    var min: Int = 0,
-    var sec: Int = 0
+data class Song(
+    val id: Long,
+    val title: String,
+    val artist: String,
+    val contentUri: Uri,
+    val albumArtUri: Uri?, // nullable since some songs may not have album art
+    val filePath: String,
+    val duration: Long
 )

@@ -1,15 +1,29 @@
 package com.example.playerfy.ui.screens
 
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.*
 import androidx.compose.material3.Button
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import com.example.playerfy.ui.viewmodel.MainViewModel
 
 @Composable
-fun NoPermissionScreen(onRequestPermission: () -> Unit) {
+fun NoPermissionScreen(mainViewModel: MainViewModel, permission: String) {
+    val audioPermissionResultLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.RequestPermission(),
+        onResult = { isGranted ->
+            mainViewModel.onPermissionResult(
+                permission = permission,
+                isGranted = isGranted
+            )
+        }
+    )
     Box(
         modifier = Modifier.fillMaxSize(),
         contentAlignment = Alignment.Center
@@ -23,7 +37,9 @@ fun NoPermissionScreen(onRequestPermission: () -> Unit) {
             Spacer(modifier = Modifier.height(8.dp))
             Text("This app needs access to your audio files.")
             Spacer(modifier = Modifier.height(16.dp))
-            Button(onClick = onRequestPermission) {
+            Button(onClick = {
+                audioPermissionResultLauncher.launch(permission)
+            }) {
                 Text("Request Permission Again")
             }
             Spacer(modifier = Modifier.height(8.dp))

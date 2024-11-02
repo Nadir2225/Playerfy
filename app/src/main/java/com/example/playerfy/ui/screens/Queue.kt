@@ -26,16 +26,16 @@ fun Queue(show: Boolean, close: () -> Unit) {
 
     val screenHeight = LocalConfiguration.current.screenHeightDp.dp
 
-    var offsetY by remember { mutableStateOf(0f) }
+    var offsetY2 by remember { mutableStateOf(0f) }
 
-    val offset by animateDpAsState(
+    val offset2 by animateDpAsState(
         targetValue = if (show) 0.dp else screenHeight + 100.dp,
         animationSpec = tween(durationMillis = 300)
     )
 
     Box (
         modifier = Modifier
-            .offset(y = offset + offsetY.dp)
+            .offset(y = offset2 + offsetY2.dp)
             .fillMaxSize()
             .clickable {
 

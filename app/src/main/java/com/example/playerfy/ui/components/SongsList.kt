@@ -3,6 +3,7 @@ package com.example.playerfy.ui.components
 import android.content.ContentResolver
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.scrollable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -44,7 +45,11 @@ fun SongsList(cont: ContentResolver, songs: MutableList<Song>, songsViewModel: S
                     .size(50.dp)
                     .clip(CircleShape)
                     .background(Green)
-                    .align(Alignment.Center)) {
+                    .align(Alignment.Center)
+                    .clickable {
+                        songsViewModel.updateCurrentSong(songs[0])
+                    }
+                ) {
                     Image(
                         painter = painterResource(R.drawable.play),
                         contentDescription = null,

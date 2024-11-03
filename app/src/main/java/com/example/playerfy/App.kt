@@ -44,6 +44,18 @@ fun App(songsViewModel: SongsViewModel) {
     val currentSong by songsViewModel.currentSong.observeAsState()
     val songsList by songsViewModel.songsList.observeAsState()
 
+    LaunchedEffect(currentSong) {
+//        if (currentSong?.song != null) {
+//            if (currentSong!!.paused != null) {
+//                if (currentSong!!.paused != true) {
+//
+//                }
+//            }
+//        }
+        songsViewModel.updateIsPaused(false)
+        songsViewModel.playSong(currentSong?.song)
+    }
+
     var expanded by remember { mutableStateOf(true) }
     var context = LocalContext.current
 

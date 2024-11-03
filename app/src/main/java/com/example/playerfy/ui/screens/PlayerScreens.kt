@@ -1,7 +1,6 @@
 package com.example.playerfy.ui.screens
 
 import android.content.ContentResolver
-import android.content.Intent
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.util.Log
@@ -14,8 +13,6 @@ import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.detectDragGestures
-import androidx.compose.foundation.gestures.detectTapGestures
-import androidx.compose.foundation.gestures.detectVerticalDragGestures
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -33,7 +30,6 @@ import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -50,8 +46,6 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.graphics.painter.BitmapPainter
 import androidx.compose.ui.input.pointer.pointerInput
-import androidx.compose.ui.layout.LayoutCoordinates
-import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
@@ -64,13 +58,9 @@ import com.example.playerfy.R
 import com.example.playerfy.data.model.Song
 import com.example.playerfy.ui.components.SongProgressBar
 import com.example.playerfy.ui.viewmodel.SongsViewModel
-import com.example.playerfy.util.BroadcastHelper
 import com.jetpack.marqueetext.MarqueeText
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
-import java.util.Locale
-import kotlin.math.max
-import kotlin.math.min
 
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
@@ -171,7 +161,7 @@ fun ExpandedPlayerInterface(songs: MutableList<Song>, expanded: Boolean, songsVi
                         )
                     }
             ) {
-                PlayerHeader(song.filePath.substringAfterLast("/"), collapse)
+                PlayerHeader(song.folderName, collapse)
                 HorizontalPager(state = state) {
                     // Directly display the song name based on the current index
                     Column(
@@ -192,7 +182,7 @@ fun ExpandedPlayerInterface(songs: MutableList<Song>, expanded: Boolean, songsVi
                     }
                 }
                 // Display the current song name
-                PlayerActions(song.title, song.artist, openQueue = { isQueueShown = true })
+                PlayerActions(songsViewModel = songsViewModel, openQueue = { isQueueShown = true })
             }
         }
         Queue(show = isQueueShown, close = { isQueueShown = false })
@@ -202,7 +192,10 @@ fun ExpandedPlayerInterface(songs: MutableList<Song>, expanded: Boolean, songsVi
 @Composable
 fun CollapsedPlayerInterface(songsViewModel: SongsViewModel, cont: ContentResolver, expand: () -> Unit) {
     val currentSong by songsViewModel.currentSong.observeAsState()
+    val isPaused by songsViewModel.isPaused.observeAsState()
     val songsList by songsViewModel.songsList.observeAsState()
+
+    val context = LocalContext.current
 
     val bitmap: Bitmap = if (currentSong?.song?.albumArtUri != null) {
         currentSong!!.song?.albumArtUri?.let { songsViewModel.getBitmapFromUri(cont, it) } ?:
@@ -271,28 +264,69 @@ fun CollapsedPlayerInterface(songsViewModel: SongsViewModel, cont: ContentResolv
             horizontalArrangement = Arrangement.SpaceBetween
         ) {
             Image(
-                modifier = Modifier.size(30.dp)
+                modifier = Modifier
+                    .size(30.dp)
                     .clickable {
-                        if (songsList!!.indexOf(currentSong?.song) != 0 ) {
-                            songsViewModel.updateCurrentSong(songsList?.get(songsList!!.indexOf(currentSong?.song) - 1)!!)
+                        if (songsList!!.indexOf(currentSong?.song) != 0) {
+                            songsViewModel.updateCurrentSong(
+                                songsList?.get(
+                                    songsList!!.indexOf(
+                                        currentSong?.song
+                                    ) - 1
+                                )!!
+                            )
                         }
                     }
                 ,
                 painter = painterResource(R.drawable.previous),
                 contentDescription = null
             )
-            Box(modifier = Modifier.size(30.dp).background(Color.White, shape = CircleShape)) {
-                Image(
-                    modifier = Modifier.size(15.dp).align(Alignment.Center),
-                    painter = painterResource(R.drawable.play),
-                    contentDescription = null
-                )
-            }
-            Image(
-                modifier = Modifier.size(30.dp)
+            if (isPaused == true) {
+                Box(modifier = Modifier
+                    .size(30.dp)
+                    .background(Color.White, shape = CircleShape)
                     .clickable {
-                        if (songsList!!.indexOf(currentSong?.song) != songsList!!.size - 1 ) {
-                            songsViewModel.updateCurrentSong(songsList?.get(songsList!!.indexOf(currentSong?.song) + 1)!!)
+                        songsViewModel.resumeMusic()
+                    }
+                ) {
+                    Image(
+                        modifier = Modifier
+                            .size(15.dp)
+                            .align(Alignment.Center),
+                        painter = painterResource(R.drawable.play),
+                        contentDescription = null
+                    )
+                }
+            } else {
+                Box(modifier = Modifier
+                    .size(30.dp)
+                    .background(Color.White, shape = CircleShape)
+                    .clickable {
+                        songsViewModel.pauseMusic()
+                    }
+                ) {
+                    Image(
+                        modifier = Modifier
+                            .size(15.dp)
+                            .align(Alignment.Center),
+                        painter = painterResource(R.drawable.pause),
+                        contentDescription = null
+                    )
+                }
+            }
+
+            Image(
+                modifier = Modifier
+                    .size(30.dp)
+                    .clickable {
+                        if (songsList!!.indexOf(currentSong?.song) != songsList!!.size - 1) {
+                            songsViewModel.updateCurrentSong(
+                                songsList?.get(
+                                    songsList!!.indexOf(
+                                        currentSong?.song
+                                    ) + 1
+                                )!!
+                            )
                         }
                     }
                 ,
@@ -346,8 +380,11 @@ fun PlayerHeader(folderName: String, collapse: () -> Unit, color: Color = Color.
 }
 
 @Composable
-fun PlayerActions(name: String, artist: String, openQueue: () -> Unit) {
+fun PlayerActions(songsViewModel: SongsViewModel, openQueue: () -> Unit) {
     val context = LocalContext.current
+    val currentSong by songsViewModel.currentSong.observeAsState()
+    val songsList by songsViewModel.songsList.observeAsState()
+    val isPaused by songsViewModel.isPaused.observeAsState()
 
     Column(
         modifier = Modifier
@@ -356,13 +393,13 @@ fun PlayerActions(name: String, artist: String, openQueue: () -> Unit) {
     ) {
         Column {
             MarqueeText(
-                text = name,
+                text = currentSong?.song?.title?:"idk",
                 color = Color.White,
                 fontWeight = FontWeight.Bold,
                 fontSize = 21.sp
             )
             Text(
-                text = artist,
+                text = currentSong?.song?.artist?:"idk",
                 color = Color(211, 211, 211, 179),
             )
         }
@@ -404,31 +441,72 @@ fun PlayerActions(name: String, artist: String, openQueue: () -> Unit) {
             Image(
                 painter = painterResource(R.drawable.previous),
                 contentDescription = null,
-                modifier = Modifier.size(30.dp)
-            )
-            Box(
-                modifier = Modifier
-                    .clip(CircleShape)
-                    .background(Color.White)
-                    .size(60.dp)
-                    .clickable {
-                        BroadcastHelper.sendMusicControlBroadcast(context = context, action = "PLAY")
+                modifier = Modifier.size(30.dp).clickable {
+                    if (songsList!!.indexOf(currentSong?.song) != 0) {
+                        songsViewModel.updateCurrentSong(
+                            songsList?.get(
+                                songsList!!.indexOf(
+                                    currentSong?.song
+                                ) - 1
+                            )!!
+                        )
                     }
-            ) {
-                Image(
-                    painter = painterResource(R.drawable.play),
-                    contentDescription = null,
+                }
+            )
+            if (isPaused == true) {
+                Box(
                     modifier = Modifier
-                        .align(Alignment.Center)
-                        .size(23.dp)
-                )
+                        .clip(CircleShape)
+                        .background(Color.White)
+                        .size(60.dp)
+                        .clickable {
+                            songsViewModel.resumeMusic()
+                        }
+                ) {
+                    Image(
+                        painter = painterResource(R.drawable.play),
+                        contentDescription = null,
+                        modifier = Modifier
+                            .align(Alignment.Center)
+                            .size(23.dp)
+                    )
+                }
+            } else {
+                Box(
+                    modifier = Modifier
+                        .clip(CircleShape)
+                        .background(Color.White)
+                        .size(60.dp)
+                        .clickable {
+                            songsViewModel.pauseMusic()
+                        }
+                ) {
+                    Image(
+                        painter = painterResource(R.drawable.pause),
+                        contentDescription = null,
+                        modifier = Modifier
+                            .align(Alignment.Center)
+                            .size(23.dp)
+                    )
+                }
             }
+
             Image(
                 painter = painterResource(R.drawable.next),
                 contentDescription = null,
-                modifier = Modifier.size(30.dp).clickable {
-                    BroadcastHelper.sendMusicControlBroadcast(context = context, action = "PAUSE")
-                }
+                modifier = Modifier
+                    .size(30.dp)
+                    .clickable {
+                        if (songsList!!.indexOf(currentSong?.song) != songsList!!.size - 1) {
+                            songsViewModel.updateCurrentSong(
+                                songsList?.get(
+                                    songsList!!.indexOf(
+                                        currentSong?.song
+                                    ) + 1
+                                )!!
+                            )
+                        }
+                    }
             )
             Image(
                 painter = painterResource(R.drawable.repeat),

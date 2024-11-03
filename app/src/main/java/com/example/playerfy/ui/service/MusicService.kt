@@ -1,11 +1,13 @@
+// MusicService.kt
 package com.example.playerfy.ui.service
 
 import android.app.Service
 import android.content.Intent
 import android.media.MediaPlayer
+import android.net.Uri
 import android.os.IBinder
 import android.widget.Toast
-import com.example.playerfy.R
+import androidx.compose.ui.platform.LocalContext
 
 class MusicService : Service() {
 
@@ -13,38 +15,54 @@ class MusicService : Service() {
 
     override fun onCreate() {
         super.onCreate()
-        mediaPlayer = MediaPlayer.create(this, R.raw.audio_file) // Placez un fichier audio dans res/raw/
-        mediaPlayer.isLooping = true
+        mediaPlayer = MediaPlayer()
+        mediaPlayer.isLooping = true // Optional: Set to loop
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         when (intent?.action) {
-            "PLAY" -> playMusic()
+            "PLAY" -> {
+                val audioUri = intent.getStringExtra("AUDIO_URI")
+                if (audioUri != null) {
+                    playMusic(audioUri)
+                } else {
+                    Toast.makeText(this, "somthing went wrong", Toast.LENGTH_SHORT).show()
+                }
+            }
             "PAUSE" -> pauseMusic()
+            "RESUME" -> resumeMusic()
             "STOP" -> stopMusic()
         }
         return START_STICKY
     }
 
-    private fun playMusic() {
-        if (!mediaPlayer.isPlaying) {
-            mediaPlayer.start()
-            Toast.makeText(this, "Lecture de la musique", Toast.LENGTH_SHORT).show()
+    private fun playMusic(audioUri: String) {
+        try {
+            mediaPlayer.reset() // Reset the MediaPlayer
+            mediaPlayer.setDataSource(this, Uri.parse(audioUri)) // Use the URI
+            mediaPlayer.prepare() // Prepare for playback
+            mediaPlayer.start() // Start playback
+        } catch (e: Exception) {
+            e.printStackTrace()
+            Toast.makeText(this, "Error playing audio: ${e.message}", Toast.LENGTH_SHORT).show()
         }
     }
 
     private fun pauseMusic() {
         if (mediaPlayer.isPlaying) {
             mediaPlayer.pause()
-            Toast.makeText(this, "Musique en pause", Toast.LENGTH_SHORT).show()
+        }
+    }
+
+    private fun resumeMusic() {
+        if (!mediaPlayer.isPlaying) {
+            mediaPlayer.start() // Resume playback
         }
     }
 
     private fun stopMusic() {
         if (mediaPlayer.isPlaying) {
             mediaPlayer.stop()
-            mediaPlayer.prepare() // Préparer pour rejouer
-            Toast.makeText(this, "Musique arrêtée", Toast.LENGTH_SHORT).show()
         }
         stopSelf()
     }

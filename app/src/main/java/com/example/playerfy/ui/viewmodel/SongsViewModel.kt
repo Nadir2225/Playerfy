@@ -3,24 +3,19 @@ package com.example.playerfy.ui.viewmodel
 import android.app.Application
 import android.content.ContentResolver
 import android.content.ContentUris
-import android.content.Context
-import android.content.Intent
 import android.content.IntentFilter
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.net.Uri
 import android.provider.MediaStore
-import android.util.Log
-import androidx.compose.ui.platform.LocalContext
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
-import androidx.lifecycle.ViewModel
 import com.example.playerfy.data.model.CurrentSong
 import com.example.playerfy.data.model.Song
 import com.example.playerfy.ui.service.MusicBroadcastReceiver
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.withContext
+import com.example.playerfy.util.BroadcastHelper
+import java.io.File
 
 class SongsViewModel(application: Application) : AndroidViewModel(application) {
     private var _currentSong: MutableLiveData<CurrentSong> = MutableLiveData(CurrentSong(null))
@@ -32,8 +27,17 @@ class SongsViewModel(application: Application) : AndroidViewModel(application) {
     private var _songsQueue: MutableLiveData<MutableList<Song>> = MutableLiveData(mutableListOf())
     val songsQueue: LiveData<MutableList<Song>> = _songsQueue
 
+    private var _isPaused: MutableLiveData<Boolean> = MutableLiveData(false)
+    val isPaused: LiveData<Boolean> = _isPaused
+
     private val context = getApplication<Application>().applicationContext
     private var musicReceiver: MusicBroadcastReceiver
+
+    private val _currentPosition = MutableLiveData<Long>()
+    val currentPosition: LiveData<Long> = _currentPosition
+
+    private val _totalDuration = MutableLiveData<Long>()
+    val totalDuration: LiveData<Long> = _totalDuration
 
     init {
         // Register the BroadcastReceiver
@@ -41,6 +45,7 @@ class SongsViewModel(application: Application) : AndroidViewModel(application) {
         val filter = IntentFilter().apply {
             addAction("PLAY")
             addAction("PAUSE")
+            addAction("RESUME")
             addAction("STOP")
         }
         context.registerReceiver(musicReceiver, filter)
@@ -67,6 +72,27 @@ class SongsViewModel(application: Application) : AndroidViewModel(application) {
 
     fun unShuffle() {
         _songsQueue.value = _songsList.value
+    }
+
+    fun playSong(song: Song?) {
+        if (song != null) {
+            BroadcastHelper.sendMusicControlBroadcast(context = context, "PLAY", audioUri = song.contentUri.toString())
+        }
+    }
+
+    fun pauseMusic() {
+        BroadcastHelper.sendMusicControlBroadcast(context, "PAUSE")
+        _isPaused.value = true
+    }
+
+    fun updateIsPaused(value: Boolean) {
+        _isPaused.value = value
+    }
+
+
+    fun resumeMusic() {
+        BroadcastHelper.sendMusicControlBroadcast(context, "RESUME")
+        _isPaused.value = false
     }
 
     fun fetchAudioFiles() {
@@ -119,13 +145,15 @@ class SongsViewModel(application: Application) : AndroidViewModel(application) {
                     Uri.parse("content://media/external/audio/albumart"), albumId
                 )
 
+                val folderName = File(filePath).parentFile?.name ?: "Unknown"
+
                 audioList += Song(
                     id = id,
                     title = title,
                     artist = artist,
                     contentUri = contentUri,
                     albumArtUri = albumArtUri,
-                    filePath = filePath,
+                    folderName = folderName,
                     duration = duration
                 )
             }

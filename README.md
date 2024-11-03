@@ -1,6 +1,5 @@
 # Playerfy
 
-## Module : Composant Android (M205)
 **Author:** EL OUADGHIRI Nadir  
 **Year:** 2024/2025  
 

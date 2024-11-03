@@ -1,6 +1,7 @@
 package com.example.playerfy.ui.screens
 
 import android.content.ContentResolver
+import android.content.Intent
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.util.Log
@@ -63,6 +64,7 @@ import com.example.playerfy.R
 import com.example.playerfy.data.model.Song
 import com.example.playerfy.ui.components.SongProgressBar
 import com.example.playerfy.ui.viewmodel.SongsViewModel
+import com.example.playerfy.util.BroadcastHelper
 import com.jetpack.marqueetext.MarqueeText
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -345,6 +347,7 @@ fun PlayerHeader(folderName: String, collapse: () -> Unit, color: Color = Color.
 
 @Composable
 fun PlayerActions(name: String, artist: String, openQueue: () -> Unit) {
+    val context = LocalContext.current
 
     Column(
         modifier = Modifier
@@ -408,6 +411,9 @@ fun PlayerActions(name: String, artist: String, openQueue: () -> Unit) {
                     .clip(CircleShape)
                     .background(Color.White)
                     .size(60.dp)
+                    .clickable {
+                        BroadcastHelper.sendMusicControlBroadcast(context = context, action = "PLAY")
+                    }
             ) {
                 Image(
                     painter = painterResource(R.drawable.play),
@@ -420,7 +426,9 @@ fun PlayerActions(name: String, artist: String, openQueue: () -> Unit) {
             Image(
                 painter = painterResource(R.drawable.next),
                 contentDescription = null,
-                modifier = Modifier.size(30.dp)
+                modifier = Modifier.size(30.dp).clickable {
+                    BroadcastHelper.sendMusicControlBroadcast(context = context, action = "PAUSE")
+                }
             )
             Image(
                 painter = painterResource(R.drawable.repeat),

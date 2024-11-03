@@ -5,6 +5,7 @@ import android.content.ContentResolver
 import android.content.ContentUris
 import android.content.Context
 import android.content.Intent
+import android.content.IntentFilter
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.net.Uri
@@ -17,6 +18,7 @@ import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import com.example.playerfy.data.model.CurrentSong
 import com.example.playerfy.data.model.Song
+import com.example.playerfy.ui.service.MusicBroadcastReceiver
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
@@ -29,6 +31,26 @@ class SongsViewModel(application: Application) : AndroidViewModel(application) {
 
     private var _songsQueue: MutableLiveData<MutableList<Song>> = MutableLiveData(mutableListOf())
     val songsQueue: LiveData<MutableList<Song>> = _songsQueue
+
+    private val context = getApplication<Application>().applicationContext
+    private var musicReceiver: MusicBroadcastReceiver
+
+    init {
+        // Register the BroadcastReceiver
+        musicReceiver = MusicBroadcastReceiver()
+        val filter = IntentFilter().apply {
+            addAction("PLAY")
+            addAction("PAUSE")
+            addAction("STOP")
+        }
+        context.registerReceiver(musicReceiver, filter)
+    }
+
+    override fun onCleared() {
+        super.onCleared()
+        // Unregister the receiver when ViewModel is cleared
+        context.unregisterReceiver(musicReceiver)
+    }
 
     // Function to update the currently selected song
     fun updateCurrentSong(newSong: Song) {

@@ -30,8 +30,10 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
-<!--        <service android:name=".ui.service.MusicService" />-->
-<!--        <receiver android:name="ui.service.MusicBroadcastReceiver" />-->
+
+        <service android:name=".ui.service.MusicService" />
+
+        <receiver android:name=".ui.service.MusicBroadcastReceiver" />
     </application>
 
 </manifest>

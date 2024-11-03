@@ -18,6 +18,6 @@ L'interface principale affiche tous les fichiers audio disponibles dans le stock
 <img src="https://github.com/user-attachments/assets/598278d0-cce2-4883-bd27-841d9aaf67a9" style="width: 200px"/>
 
 ### Interface de contrôle
-L'interface de contrôle offre des fonctionnalités telles que la lecture, la pause, la reprise et le changement de piste audio. L'arrière-plan de cette interface change en fonction des couleurs dominantes de la pochette de l'album en cours de lecture, offrant une expérience visuelle immersive.
+L'interface de contrôle offre des fonctionnalités telles que la lecture, la pause, la reprise et le changement de piste audio. L'arrière-plan de cette interface change en fonction des couleurs dominantes de la pochette de l'album en cours de lecture, offrant une expérience visuelle immersive.<br>
 <img src="https://github.com/user-attachments/assets/0323b3a0-b411-43ba-b777-32bc08920e5b" style="width: 200px"/>
 <img src="https://github.com/user-attachments/assets/4f796d88-8227-4162-ac64-98d480b7822e" style="width: 200px"/>
